@@ -13,7 +13,6 @@ app = Flask(__name__)
 # Secret key for sessions encryption
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
-
 @app.route('/')
 def home():
     return render_template("index.html", title="Card Reader")
@@ -91,6 +90,11 @@ def main():
         return json.dumps(data)
     else:
         return res
+    
+@app.route('/health')
+def chk():
+    return '200'
+
 if __name__ == '__main__':
     # Setup Tesseract executable path
     app.run(debug=True,port=10000)
