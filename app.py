@@ -93,4 +93,5 @@ def main():
         return res
 if __name__ == '__main__':
     # Setup Tesseract executable path
-    app.run(debug=True)
+    app.run(debug=True,port=10000)
+    
