@@ -5,6 +5,13 @@ import json
 import pytesseract
 from PIL import Image
 from flask import Flask, request, render_template, redirect, url_for, session
+from tesseract_pack import data_here
+
+tesseract_loc = data_here
+
+import cv2
+import numpy
+
 # import locationtagger
 
 
@@ -13,22 +20,35 @@ app = Flask(__name__)
 # Secret key for sessions encryption
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
-@app.route('/')
+
+@app.route("/")
 def home():
     return render_template("index.html", title="Card Reader")
 
 
-@app.route('/scanner', methods=['GET', 'POST'])
+@app.route("/scanner", methods=["GET", "POST"])
 def scan_file():
-    if request.method == 'POST':
+    if request.method == "POST":
         start_time = datetime.datetime.now()
-        image_data = request.files['file'].read()
+        # image_data = request.files['file'].read()
+        # f=io.BytesIO(image_data)
+        text = ""
+        image = cv2.imdecode(
+            numpy.frombuffer(request.files["file"].read(), numpy.uint8),
+            cv2.IMREAD_UNCHANGED,
+        )
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        # threshold the image using Otsu's thresholding method
+        thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
 
-        text = pytesseract.image_to_string(Image.open(io.BytesIO(image_data)))
+        text = pytesseract.image_to_string(thresh, lang="eng")
+        print(text)
+
+        # text = pytesseract.image_to_string(Image.open(io.BytesIO(image_data)))
 
         print("Found data:", text)
 
-        phoneNums = re.findall(r'[\+\(]?[1-9][0-9 .\-\(\)]{8,}[0-9]', text)
+        phoneNums = re.findall(r"[\+\(]?[1-9][0-9 .\-\(\)]{8,}[0-9]", text)
         emails = re.findall(r"[a-z0-9\.\-+_]+@[a-z0-9\.\-+_]+\.[a-z]+", text)
         # attempt to use regular expressions to parse out names/titles (not
         # necessarily reliable)
@@ -41,38 +61,47 @@ def scan_file():
         # address = re.findall(address_regex, text)
         # t=text
         # place = locationtagger.find_locations(text = t)
-        data = {'text':text,'phones':phoneNums,'emails':emails,'names':names,'address':address}
-
-        session['data'] = {
-            "text": json.dumps(data),
-            "time": str((datetime.datetime.now() - start_time).total_seconds())
+        data = {
+            "text": text,
+            "phones": phoneNums,
+            "emails": emails,
+            "names": names,
+            "address": address,
         }
 
-        return redirect(url_for('result'))
+        session["data"] = {
+            "text": json.dumps(data),
+            "time": str((datetime.datetime.now() - start_time).total_seconds()),
+        }
+
+        return redirect(url_for("result"))
 
 
-@app.route('/result')
+@app.route("/result")
 def result():
     if "data" in session:
-        data = session['data']
+        data = session["data"]
         return render_template(
             "result.html",
             title="Result",
             time=data["time"],
             text=data["text"],
-            words=len(data["text"].split(" "))
+            words=len(data["text"].split(" ")),
         )
     else:
         return "Wrong request method."
 
-@app.route('/api', methods=['GET', 'POST'])
+
+@app.route("/api", methods=["GET", "POST"])
 def main():
-    res='process file are not found'
-    if request.method == 'POST':
-        image_data = request.files['file'].read()
+    res = "process file are not found"
+    if request.method == "POST":
+        image_data = request.files["file"].read()
+        f = io.BytesIO(image_data)
+        print(f)
         text = pytesseract.image_to_string(Image.open(io.BytesIO(image_data)))
         print("Found data:", text)
-        phoneNums = re.findall(r'[\+\(]?[1-9][0-9 .\-\(\)]{8,}[0-9]', text)
+        phoneNums = re.findall(r"[\+\(]?[1-9][0-9 .\-\(\)]{8,}[0-9]", text)
         emails = re.findall(r"[a-z0-9\.\-+_]+@[a-z0-9\.\-+_]+\.[a-z]+", text)
         # attempt to use regular expressions to parse out names/titles (not
         # necessarily reliable)
@@ -85,17 +114,27 @@ def main():
         # address = re.findall(address_regex, text)
         # t=text
         # place = locationtagger.find_locations(text = t)
-        data = {'text':text,'phones':phoneNums,'emails':emails,'names':names,'address':address}
+        data = {
+            "text": text,
+            "phones": phoneNums,
+            "emails": emails,
+            "names": names,
+            "address": address,
+        }
 
         return json.dumps(data)
     else:
         return res
-    
-@app.route('/health')
-def chk():
-    return '200'
 
-if __name__ == '__main__':
+
+@app.route("/health")
+def chk():
+    return "200"
+
+
+if __name__ == "__main__":
     # Setup Tesseract executable path
-    app.run(debug=True,port=10000)
-    
+    path = tesseract_loc  # +'\\tesseract.exe'
+    pytesseract.pytesseract.tesseract_cmd = path
+    # print(path)
+    app.run(debug=True)

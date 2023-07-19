@@ -1,4 +1,6 @@
 flask
 Pillow
 pytesseract
-gunicorn
+numpy
+opencv-python
+tesseract-ocr-data
