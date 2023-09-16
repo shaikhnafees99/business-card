@@ -112,12 +112,12 @@ def main():
 
 @app.route("/health")
 def chk():
-    return "200"
+    return ""
 
 
 if __name__ == "__main__":
     # Setup Tesseract executable path
-    path = tesseract_loc  # +'\\tesseract.exe'
+    path = tesseract_loc  # + "\\tesseract.exe"
     pytesseract.pytesseract.tesseract_cmd = path
     # print(path)
     app.run(debug=True)
