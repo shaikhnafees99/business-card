@@ -5,20 +5,14 @@ import json
 import pytesseract
 from PIL import Image
 from flask import Flask, request, render_template, redirect, url_for, session
+
 from tesseract_pack import data_here
 
 tesseract_loc = data_here
 
-import cv2
-import numpy
-
-# import locationtagger
-
-
 app = Flask(__name__)
 
-# Secret key for sessions encryption
-app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+app.secret_key = b'_5#y2L"F4Q8z\\n\\xec]/'
 
 
 @app.route("/")
@@ -30,21 +24,10 @@ def home():
 def scan_file():
     if request.method == "POST":
         start_time = datetime.datetime.now()
-        # image_data = request.files['file'].read()
-        # f=io.BytesIO(image_data)
-        text = ""
-        image = cv2.imdecode(
-            numpy.frombuffer(request.files["file"].read(), numpy.uint8),
-            cv2.IMREAD_UNCHANGED,
-        )
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        # threshold the image using Otsu's thresholding method
-        thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
 
-        text = pytesseract.image_to_string(thresh, lang="eng")
-        print(text)
+        image_data = request.files["file"].read()
 
-        # text = pytesseract.image_to_string(Image.open(io.BytesIO(image_data)))
+        text = pytesseract.image_to_string(Image.open(io.BytesIO(image_data)))
 
         print("Found data:", text)
 
