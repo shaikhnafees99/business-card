@@ -120,4 +120,4 @@ if __name__ == "__main__":
     path = tesseract_loc  # + "\\tesseract.exe"
     pytesseract.pytesseract.tesseract_cmd = path
     # print(path)
-    app.run(debug=True)
+    app.run(debug=True,port=10000)
